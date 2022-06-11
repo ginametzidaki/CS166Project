@@ -26,9 +26,10 @@ CREATE TABLE Orders(
 	timeStampRecieved timestamp NOT NULL,
 	total real NOT NULL,
 	PRIMARY KEY(orderid)
-	--added so that when users put in an order but update their login, you can still find the order
-	FOREIGN KEY(login) REFERENCES Users(login);
-	ON UPDATE CASCADE);
+	--added so that when users put in an order but update their login/login gets deleted, you can still find the order
+	FOREIGN KEY(login) REFERENCES Users(login)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE);
 
 CREATE TABLE ItemStatus(
 	orderid integer,
@@ -37,5 +38,11 @@ CREATE TABLE ItemStatus(
 	status char(20), 
 	comments char(130), 
 	PRIMARY KEY(orderid,itemName),
+	--added so that when users delete/update order, itemstatus will also be updated
 	FOREIGN KEY(orderid) REFERENCES Orders(orderid),
-	FOREIGN KEY(itemName) REFERENCES Menu(itemName));
+	ON UPDATE CASCADE
+	ON DELETE CASCADE,
+	--added so that when manager updates menu, itemstatus gets updates as well
+	FOREIGN KEY(itemName) REFERENCES Menu(itemName)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE);

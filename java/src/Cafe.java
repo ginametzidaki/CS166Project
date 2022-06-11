@@ -311,7 +311,7 @@ public class Cafe {
                 System.out.println("3. Place an Order");
                 System.out.println("4. Update an Order");
                 System.out.println("5. View Your Recent Orders");
-                System.out.println("6. Update customer order payment");
+                System.out.println("6. Update Customer Order Payment");
                 System.out.println(".........................");
                 System.out.println("9. Log out");
                 switch (readChoice()){
@@ -336,12 +336,12 @@ public class Cafe {
                   System.out.println("5. Place an Order");
                   System.out.println("6. Update an Order");
                   System.out.println("7. View Your Recent Orders");
-                  System.out.println("8. Update customer order payment");
+                  System.out.println("8. Update Customer Order Payment");
                   System.out.println(".........................");
                   System.out.println("9. Log out");
                   switch (readChoice()){
                      case 1: Menu(esql); break;
-                     case 2: break;
+                     case 2: UpdateMenu(esql); break;
                      case 3: authorizedUser = UpdateProfile(esql, authorizedUser, isManager); break;
                      case 4: UpdateOtherUserProfile(esql, isManager); break;
                      case 5: PlaceOrder(esql); break;
@@ -406,13 +406,13 @@ public class Cafe {
          String login = "";
          boolean enteringUser = true;
          while(enteringUser) {
-         System.out.print("\tEnter user login: ");
+         System.out.print("\tEnter user login(CASE SENSITIVE!): ");
          login = in.readLine();
          if(!LoginExists(esql, login)) {
             enteringUser = false;
          }
          }
-         System.out.print("\tEnter user password: ");
+         System.out.print("\tEnter user password(CASE SENSITIVE!): ");
          String password = in.readLine();
          boolean enteringPhone = true;
          while(enteringPhone) {
@@ -466,6 +466,277 @@ public class Cafe {
    }//end LogIn
 
 // Rest of the functions definition go in here
+
+/*How manager can update menu */
+public static void UpdateMenu(Cafe esql) {
+   try {
+      boolean updatingMenu = true;
+      while (updatingMenu) {
+         System.out.println("How would you like to update the menu?");
+         System.out.println("1. Add a new menu item");
+         System.out.println("2. Edit a specific item");
+         System.out.println("3. Delete a menu item");
+         System.out.println("4. Done updating menu");
+         switch(readChoice()){
+            case 1:
+               AddItemToMenu(esql);
+               break;
+
+            case 2:
+               EditItemOnMenu(esql);
+               break;
+
+            case 3:
+               DeleteMenuItem(esql);
+               break;
+
+            case 4:
+               updatingMenu = false;
+               break;
+
+            default:
+               System.out.println("Unrecognized choice!");
+         }
+      }
+   } catch(Exception e){
+      System.err.println (e.getMessage ());
+   }
+}
+
+/*Deletes a menu item */
+public static void DeleteMenuItem(Cafe esql) {
+   boolean confirmingItemName = true;
+   try {   
+      while(confirmingItemName){
+         System.out.println("Enter item name to delete: ");
+         String itemName = in.readLine();
+         if(!ItemOnMenu(esql, itemName)) {
+            System.out.println("1. Enter another item name");
+            System.out.println("2. Go back to updating menu options");
+            switch(readChoice()) {
+               case 1: break;
+               case 2: confirmingItemName = false; break;
+               default: System.out.println("Unrecognized choice!"); break;
+            }
+         }
+         else {
+            String query = String.format("DELETE FROM menu WHERE itemName = '%s'", itemName);
+            esql.executeUpdate(query);
+            System.out.println(itemName + " successfully deleted off menu!");
+            confirmingItemName = false;
+         }
+      }
+   } catch(Exception e){
+      System.err.println (e.getMessage ());
+   }
+}
+
+/*Edits a item based on item name user enters*/
+public static void EditItemOnMenu(Cafe esql) {
+   try {
+      String itemName = "";
+      String updatedName = "";
+      String type = "";
+      String price = "";
+      String description = "";
+      String imageURL = "";
+      String query = "";
+
+      boolean confirmingItemName = true;
+      boolean editingItem = false;
+
+      while(confirmingItemName){
+         System.out.println("Enter item name to edit: ");
+         itemName = in.readLine();
+         if(!ItemOnMenu(esql, itemName)) {
+            System.out.println("1. Enter another item name");
+            System.out.println("2. Go back to menu updating options");
+            switch(readChoice()) {
+               case 1: break;
+               case 2: confirmingItemName = false; editingItem = false; break;
+               default: System.out.println("Unrecognized choice!"); break;
+            }
+         }
+         else {
+            editingItem = true;
+            String findType = String.format("SELECT type FROM Menu WHERE itemName = '%s'", itemName);
+            List<List<String>> getType = esql.executeQueryAndReturnResult(findType);
+            type = getType.get(0).get(0);
+
+            String findPrice = String.format("SELECT price FROM Menu WHERE itemName = '%s'", itemName);
+            List<List<String>> getPrice = esql.executeQueryAndReturnResult(findPrice);
+            price = getPrice.get(0).get(0);
+
+            String findDescription = String.format("SELECT description FROM Menu WHERE itemName = '%s'", itemName);
+            List<List<String>> getDescription = esql.executeQueryAndReturnResult(findDescription);
+            price = getDescription.get(0).get(0);
+
+            String findImageURL = String.format("SELECT imageURL FROM Menu WHERE itemName = '%s'", itemName);
+            List<List<String>> getImageURL = esql.executeQueryAndReturnResult(findImageURL);
+            price = getImageURL.get(0).get(0);
+            confirmingItemName = false;
+         }
+
+         while(editingItem) {
+            System.out.println("Editing options: ");
+            System.out.println("1. Edit item name");
+            System.out.println("2. Edit item type");
+            System.out.println("3. Edit item price");
+            System.out.println("4. Edit item description");
+            System.out.println("5. Edit item imageURL");
+            System.out.println("6. Done editing");
+            switch(readChoice()) {
+               case 1: //edit name
+                  System.out.println("Enter new item name: ");
+                  updatedName = in.readLine();
+                  if(ItemOnMenu(esql, updatedName)) {
+                     System.out.print(itemName + "'s name not updated.");
+                     break;
+                  }
+                  query = String.format("UPDATE menu SET itemName = '%s' WHERE itemName = '%s'", updatedName, itemName);
+                  esql.executeUpdate(query);
+                  System.out.println("Successfully updated old item name " + itemName + " to " + updatedName);
+                  editingItem = false;
+                  break;
+
+               case 2: //edit type
+                  boolean editingType = true;
+                  while(editingType){
+                     System.out.println("Select what to update item type to: ");
+                     System.out.println("1. Drinks");
+                     System.out.println("2. Soup");
+                     System.out.println("3. Sweets");
+                     switch(readChoice()) {
+                        case 1: type = "Drinks"; break;
+                        case 2: type = "Soup"; break;
+                        case 3: type = "Sweets"; break;
+                        default: System.out.println("Unrecognized choice!"); break;
+                     }
+                     query = String.format("UPDATE menu SET type = '%s' WHERE itemName = '%s'", type, itemName);
+                     esql.executeUpdate(query);
+                     System.out.println("Successfully updated type!");
+                     editingType = false;
+                  }
+                  editingItem = false;
+                  break;
+               
+               case 3: //edit price
+                  System.out.println("Enter updated cents portion of item price: ");
+                  price = in.readLine();
+                  price = "." + price;
+                  System.out.println("Enter updated dollar portion of item price: ");
+                  price = in.readLine() + price;
+                  query = String.format("UPDATE menu SET price = '%s' WHERE itemName = '%s'", price, itemName);
+                  esql.executeUpdate(query);
+                  System.out.println("Successfully updated price!");
+                  editingItem = false;
+                  break;
+
+               case 4: //edit description
+                  System.out.println("Enter updated item description: ");
+                  description = in.readLine();
+                  query = String.format("UPDATE menu SET description = '%s' WHERE itemName = '%s'", description, itemName);
+                  esql.executeUpdate(query);
+                  System.out.println("Successfully updated description!");
+                  editingItem = false;
+                  break;
+
+               case 5: //edit imageURL
+                  System.out.println("Enter updated image URL: ");
+                  imageURL = in.readLine();
+                  query = String.format("UPDATE menu SET imageURL = '%s' WHERE itemName = '%s'", imageURL, itemName);
+                  esql.executeUpdate(query);
+                  System.out.println("Successfully updated image URL!");
+                  editingItem = false;
+                  break;
+
+               case 6: //done editing
+                  editingItem = false;
+                  break;
+            }
+         }
+
+      }
+   }catch(Exception e){
+      System.err.println (e.getMessage ());
+   }
+}
+
+/*Add new menu item */
+public static void AddItemToMenu(Cafe esql) {
+   try {
+      String itemName = "";
+      String type = "";
+      String price = "";
+      String description = "";
+      String imageURL = "";
+      boolean addingItem = true;
+      boolean confirmingItemName = true;
+      boolean confirmingItemType = true;
+      boolean confirmingItemInfo = true;
+
+      while(addingItem) {
+         while(confirmingItemName){
+            System.out.println("Enter item name: ");
+            itemName = in.readLine();
+            if(ItemOnMenu(esql, itemName)) {
+               System.out.println("1. Enter another item name");
+               System.out.println("2. Go back to menu updating options");
+               switch(readChoice()) {
+                  case 1: break;
+                  case 2: addingItem = false; confirmingItemName = false; confirmingItemType = false; confirmingItemInfo = false; break;
+                  default: System.out.println("Unrecognized choice!"); break;
+               }
+            }
+            else {
+               confirmingItemName = false;
+            }
+         }
+         
+         while(confirmingItemType){
+            System.out.println("Select item type: ");
+            System.out.println("1. Drinks");
+            System.out.println("2. Soup");
+            System.out.println("3. Sweets");
+            System.out.println("4. Back to viewing menu options");
+            switch(readChoice()) {
+               case 1: type = "Drinks"; confirmingItemType = false; break;
+               case 2: type = "Soup"; confirmingItemType = false; break;
+               case 3: type = "Sweets"; confirmingItemType = false; break;
+               case 4: confirmingItemType = false;
+               default: System.out.println("Unrecognized choice!"); break;
+            }
+         }
+
+         while(confirmingItemInfo) {
+            System.out.println("Enter cents portion of item price: ");
+            price = in.readLine();
+            price = "." + price;
+            
+            System.out.println("Enter dollar portion of item price: ");
+            price = in.readLine() + price;
+
+            System.out.println("Enter item description: ");
+            description = in.readLine();
+
+            System.out.println("Enter item image URL:");
+            imageURL = in.readLine();
+
+            String query = String.format("INSERT INTO Menu (itemName, type, price, description, imageURL) VALUES ('%s','%s','%s','%s','%s')", itemName, type, price, description, imageURL);
+            esql.executeUpdate(query);
+
+            System.out.println("New item successfully added to menu!");
+            System.out.println();
+
+            confirmingItemInfo = false;
+         }
+         addingItem = false;
+      }
+   }catch(Exception e){
+         System.err.println (e.getMessage ());
+      }
+}
+/* How to pick style of viewing menu */
 public static void Menu(Cafe esql){
    try {
       boolean viewingMenu = true;
@@ -474,7 +745,7 @@ public static void Menu(Cafe esql){
          System.out.println("1. By item name");
          System.out.println("2. By item type");
          System.out.println("3. View the full menu");
-         System.out.println("4. Done viewing");
+         System.out.println("4. Done viewing menu");
          switch(readChoice()) {
             case 1: //item name
                MenuByItemName(esql);
@@ -485,7 +756,7 @@ public static void Menu(Cafe esql){
                break;
 
             case 3: //full menu
-               FullMenu(esql);
+               ViewFullMenu(esql);
                break;
             
             case 4:
@@ -501,9 +772,19 @@ public static void Menu(Cafe esql){
       System.err.println (e.getMessage ());
    }
 }//end Menu
-public static void FullMenu(Cafe esql) {
 
-}
+/* Displays full menu */
+public static void ViewFullMenu(Cafe esql) {
+   try {
+      String getInfo = String.format("SELECT * FROM Menu");
+      esql.executeQueryAndPrintResult(getInfo);
+   }
+   catch(Exception e) {
+      System.err.println (e.getMessage ());
+   } 
+}//end ViewFullMenu
+
+/* Displays menu by item type selected */
 public static void MenuByItemType(Cafe esql) {
    try {
    String type = null;
@@ -528,7 +809,7 @@ public static void MenuByItemType(Cafe esql) {
 
       if (confirmedType) {
          String getInfo = String.format("SELECT itemName, price, description, imageURL FROM Menu WHERE type = '%s'", type);
-            esql.executeQueryAndPrintResult(getInfo);
+         esql.executeQueryAndPrintResult(getInfo);
 
          confirmingItemType = false;
 
@@ -537,8 +818,9 @@ public static void MenuByItemType(Cafe esql) {
 }catch(Exception e) {
    System.err.println (e.getMessage ());
 }
-}
+}//end MenuByItemType
 
+/* Returns true is item type is on menu, returns false if item type is not on menu *NOT CURRENTLY IN USE* */
 public static boolean ItemTypeOnMenu(Cafe esql, String type) {
    try{
       String query = String.format("SELECT type FROM Menu WHERE itemName = '%s'", type);
@@ -555,8 +837,9 @@ public static boolean ItemTypeOnMenu(Cafe esql, String type) {
       System.err.println (e.getMessage ());
       return false;
    }
-}
+}//end ItemTypeOnMenu
 
+/* How to show items when getting input of item name */
 public static void MenuByItemName(Cafe esql) {
    try {
       boolean confirmingItemName = true;
@@ -598,8 +881,9 @@ public static void MenuByItemName(Cafe esql) {
    }catch(Exception e) {
       System.err.println (e.getMessage ());
    }
-}
+}//end MenuByItemName
 
+/* Returns true if item name entered is in database, false otherwise */
 public static boolean ItemOnMenu(Cafe esql, String name) {
    try{
       String query = String.format("SELECT itemName FROM Menu WHERE itemName = '%s'", name);
@@ -703,6 +987,7 @@ public static boolean PhoneNumberExists(Cafe esql, String userPhoneNumber) {
   }
 }//end PhoneNumberExists
 
+/*General function to get to options to update a profile */
 public static String UpdateProfile(Cafe esql, String authorizedUser, Boolean checkManager){
   try {
      boolean updatingProfile = true;
@@ -918,6 +1203,7 @@ public static void UpdateUserPhoneNumber(Cafe esql, String userToUpdate) {
   }
 }//end UpdateUserPhoneNumber
 
+/*How manager can update user type */
 public static void UpdateUserType(Cafe esql, String userToUpdate) {
    try{
       String newUserType = "Customer";
