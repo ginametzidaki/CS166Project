@@ -1023,14 +1023,8 @@ public static String UpdateProfile(Cafe esql, String authorizedUser, Boolean che
                  UpdateUserPhoneNumber(esql, userToUpdate);
                  break;
 
-              case 4: //updating favorite items *****FIXME******
-                 System.out.printf("Enter new favorite items for '%s': ", userToUpdate);
-                 String newUserFavItems = in.readLine();
-
-                 String query = String.format("UPDATE users SET favItems = '%s' WHERE login = '%s'", newUserFavItems, userToUpdate);
-                 esql.executeUpdate(query);
-
-                 System.out.println("User favorite items successfully updated!");
+              case 4: //updating favorite items
+                 UpdateFavoriteItems(esql, userToUpdate);
                  break;
               
               case 5: //updating user type as manager only
@@ -1061,6 +1055,21 @@ public static String UpdateProfile(Cafe esql, String authorizedUser, Boolean che
      return null;
   }
 }//end of UpdateProfile
+
+/* How to update favorite items */
+public static void UpdateFavoriteItems(Cafe esql, String userToUpdate) {
+   try {
+      System.out.printf("Enter new favorite items for '%s': ", userToUpdate);
+      String newUserFavItems = in.readLine();
+
+      String query = String.format("UPDATE users SET favItems = '%s' WHERE login = '%s'", newUserFavItems, userToUpdate);
+      esql.executeUpdate(query);
+
+      System.out.println("User favorite items successfully updated!");
+   }catch(Exception e){
+      System.err.println (e.getMessage ());
+   }
+}
 
 /* How managers can update other user's profiles */
 public static void UpdateOtherUserProfile(Cafe esql, boolean checkManager) {
