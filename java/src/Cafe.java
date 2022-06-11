@@ -1389,7 +1389,7 @@ public class Cafe {
          System.out.println("Enter name for order: ");
          String orderName = in.readLine();
          // print menu
-         FullMenu(esql);
+         ViewFullMenu(esql);
          // choose from menu
 
          // validate data
