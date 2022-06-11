@@ -111,7 +111,7 @@ public class Cafe {
       int rowCount = 0;
 
       // iterates through the result set and output them to standard out.
-      boolean outputHeader = true;
+      boolean outputHeader = false; //set to false to not get col name
       while (rs.next()){
 		 if(outputHeader){
 			for(int i = 1; i <= numCol; i++){
@@ -121,8 +121,8 @@ public class Cafe {
 			outputHeader = false;
 		 }
          for (int i=1; i<=numCol; ++i)
-            System.out.print (rs.getString (i) + "\t");
-         System.out.println ();
+            System.out.print (rs.getString (i) + "\n"); //newline instead of tab
+         //System.out.println ();
          ++rowCount;
       }//end while
       stmt.close ();
@@ -161,6 +161,7 @@ public class Cafe {
 		for (int i=1; i<=numCol; ++i)
 			record.add(rs.getString (i));
         result.add(record);
+        ++rowCount; //*****ADDED FOR TEST FIX IF NEEDED */
       }//end while
       stmt.close ();
       return result;
@@ -227,7 +228,7 @@ public class Cafe {
     *
     * @param args the command line arguments this inclues the <mysql|pgsql> <login file>
     */
-   public static void main (String[] args) {
+    public static void main (String[] args) {
       if (args.length != 3) {
          System.err.println (
             "Usage: " +
@@ -236,7 +237,7 @@ public class Cafe {
             " <dbname> <port> <user>");
          return;
       }//end if
-
+  
       Greeting();
       Cafe esql = null;
       try{
@@ -248,7 +249,7 @@ public class Cafe {
          String dbport = args[1];
          String user = args[2];
          esql = new Cafe (dbname, dbport, user, "");
-
+  
          boolean keepon = true;
          while(keepon) {
             // These are sample SQL statements
@@ -257,35 +258,102 @@ public class Cafe {
             System.out.println("1. Create user");
             System.out.println("2. Log in");
             System.out.println("9. < EXIT");
-            String authorisedUser = null;
+  
+            String authorizedUser = null;
+            String userType = null;
+  
             switch (readChoice()){
                case 1: CreateUser(esql); break;
-               case 2: authorisedUser = LogIn(esql); break;
+               case 2: authorizedUser = LogIn(esql); userType = CheckUserType(esql, authorizedUser); break;
                case 9: keepon = false; break;
                default : System.out.println("Unrecognized choice!"); break;
             }//end switch
-            if (authorisedUser != null) {
-              boolean usermenu = true;
-              while(usermenu) {
+  
+            if (authorizedUser != null) {
+               boolean isCustomer = false;
+               boolean isEmployee = false;
+               boolean isManager = false;
+               if (userType.equals("Customer") || userType.equals("Customer ") || userType.equals(" Customer") || userType.equals(" Customer ")) {
+                  isCustomer = true;
+               }
+               if (userType.equals("Employee") || userType.equals(" Employee") || userType.equals("Employee ") || userType.equals(" Employee ")) {
+                  isEmployee = true;
+               }
+               if(userType.equals("Manager ") || userType.equals(" Manager ") || userType.equals("Manager") || userType.equals(" Manager")) {
+                  isManager = true;
+               }
+  
+              while(isCustomer) {
                 System.out.println("MAIN MENU");
                 System.out.println("---------");
-                System.out.println("1. Go to Menu");
-                System.out.println("2. Update Profile");
-                System.out.println("3. Place a Order");
-                System.out.println("4. Update a Order");
+                System.out.println("1. View Menu");
+                System.out.println("2. Update Your Profile");
+                System.out.println("3. Place an Order");
+                System.out.println("4. Update an Order");
+                System.out.println("5. View Your Recent Orders");
                 System.out.println(".........................");
                 System.out.println("9. Log out");
                 switch (readChoice()){
                    case 1: Menu(esql); break;
-                   case 2: UpdateProfile(esql); break;
+                   case 2: authorizedUser = UpdateProfile(esql, authorizedUser, isManager); break;
                    case 3: PlaceOrder(esql); break;
                    case 4: UpdateOrder(esql); break;
-                   case 9: usermenu = false; break;
+                   case 9: isCustomer = false; break;
                    default : System.out.println("Unrecognized choice!"); break;
-                }
-              }
-            }
-         }//end while
+                }//end customer menu switch
+              }//end customer menu while
+  
+              while(isEmployee) {
+                System.out.println("MAIN MENU");
+                System.out.println("---------");
+                System.out.println("1. View Menu");
+                System.out.println("2. Update Your Profile");
+                System.out.println("3. Place an Order");
+                System.out.println("4. Update an Order");
+                System.out.println("5. View Your Recent Orders");
+                System.out.println("6. Update customer order payment");
+                System.out.println(".........................");
+                System.out.println("9. Log out");
+                switch (readChoice()){
+                   case 1: Menu(esql); break;
+                   case 2: authorizedUser = UpdateProfile(esql, authorizedUser, isManager); break;
+                   case 3: PlaceOrder(esql); break;
+                   case 4: UpdateOrder(esql); break;
+                   case 5: break;
+                   case 6: break;
+                   case 9: isEmployee = false; break;
+                   default : System.out.println("Unrecognized choice!"); break;
+                  }//end employee menu switch
+              }//end employee menu while
+  
+              while(isManager) {
+                  System.out.println("MAIN MENU");
+                  System.out.println("---------");
+                  System.out.println("1. View Menu");
+                  System.out.println("2. Update Menu");
+                  System.out.println("3. Update Your Profile");
+                  System.out.println("4. Update Other User Profile");
+                  System.out.println("5. Place an Order");
+                  System.out.println("6. Update an Order");
+                  System.out.println("7. View Your Recent Orders");
+                  System.out.println("8. Update customer order payment");
+                  System.out.println(".........................");
+                  System.out.println("9. Log out");
+                  switch (readChoice()){
+                     case 1: Menu(esql); break;
+                     case 2: break;
+                     case 3: authorizedUser = UpdateProfile(esql, authorizedUser, isManager); break;
+                     case 4: UpdateOtherUserProfile(esql, isManager); break;
+                     case 5: PlaceOrder(esql); break;
+                     case 6: UpdateOrder(esql); break;
+                     case 7: break;
+                     case 8: break;
+                     case 9: isManager = false; break;
+                     default : System.out.println("Unrecognized choice!"); break;
+                }//end manager menu switch
+              }//end manager menu while
+         }//ends if statement
+      }//end while
       }catch(Exception e) {
          System.err.println (e.getMessage ());
       }finally{
@@ -305,7 +373,7 @@ public class Cafe {
    public static void Greeting(){
       System.out.println(
          "\n\n*******************************************************\n" +
-         "              User Interface      	               \n" +
+         "              Welcome to Cafe Filoksenia!  	               \n" +
          "*******************************************************\n");
    }//end Greeting
 
@@ -317,7 +385,7 @@ public class Cafe {
       int input;
       // returns only if a correct value is given.
       do {
-         System.out.print("Please make your choice: ");
+         System.out.print("Please select from the above options: ");
          try { // read the integer, parse it and break.
             input = Integer.parseInt(in.readLine());
             break;
@@ -334,12 +402,31 @@ public class Cafe {
     **/
    public static void CreateUser(Cafe esql){
       try{
+         String phone = "";
+         String login = "";
+         boolean enteringUser = true;
+         while(enteringUser) {
          System.out.print("\tEnter user login: ");
-         String login = in.readLine();
+         login = in.readLine();
+         if(!LoginExists(esql, login)) {
+            enteringUser = false;
+         }
+         }
          System.out.print("\tEnter user password: ");
          String password = in.readLine();
-         System.out.print("\tEnter user phone: ");
-         String phone = in.readLine();
+         boolean enteringPhone = true;
+         while(enteringPhone) {
+            System.out.print("\tEnter user phone: ");
+            phone = in.readLine();
+            boolean checkPhone = CheckPhoneNumber(phone);
+            if(checkPhone) {
+               //makes it fit with database structure
+               phone = FixPhoneNumber(phone);
+            }
+            if(!PhoneNumberExists(esql, phone)) {
+               enteringPhone = false;
+            }
+         }
          
 	    String type="Customer";
 	    String favItems="";
@@ -360,9 +447,9 @@ public class Cafe {
     **/
    public static String LogIn(Cafe esql){
       try{
-         System.out.print("\tEnter user login: ");
+         System.out.print("\tEnter user login (CASE SENSITIVE!): ");
          String login = in.readLine();
-         System.out.print("\tEnter user password: ");
+         System.out.print("\tEnter user password(CASE SENSITIVE!): ");
          String password = in.readLine();
 
          String query = String.format("SELECT * FROM USERS WHERE login = '%s' AND password = '%s'", login, password);
@@ -376,264 +463,496 @@ public class Cafe {
          System.err.println (e.getMessage ());
          return null;
       }
-   }//end
+   }//end LogIn
 
 // Rest of the functions definition go in here
+public static void Menu(Cafe esql){
+   try {
+      boolean viewingMenu = true;
+      while(viewingMenu) {
+         System.out.println("How would you like to view the menu?");
+         System.out.println("1. By item name");
+         System.out.println("2. By item type");
+         System.out.println("3. View the full menu");
+         System.out.println("4. Done viewing");
+         switch(readChoice()) {
+            case 1: //item name
+               MenuByItemName(esql);
+               break;
 
-  public static void Menu(Cafe esql){}
+            case 2: //item type
+               MenuByItemType(esql);
+               break;
 
-  public static void UpdateProfile(Cafe esql){
-      try {
-         boolean updateprofile = true;
-         //boolean nouser = true;         
-         //boolean notuniquelogin = true;
-         boolean confirmlogin = false;
-         boolean isManager = false;
-         String login = null;
-         String password = null;
-         String userToUpdate = null;
+            case 3: //full menu
+               FullMenu(esql);
+               break;
+            
+            case 4:
+               viewingMenu = false;
+               break;
 
-         while (updateprofile) {  
-            System.out.print("\tConfirm user login: ");
-            login = in.readLine();
-            System.out.print("\tConfirm user password: ");
-            password = in.readLine();
-
-            String query = String.format("SELECT * FROM USERS WHERE login = '%s' AND password = '%s'", login, password);
-            int userNum = esql.executeQuery(query);
-            if (userNum > 0) {
-               confirmlogin = true;
-               String findType = String.format("SELECT type FROM USERS WHERE login = '%s'", login);
-               List<List<String>> getAccountType = esql.executeQueryAndReturnResult(findType);
-               String AccountType = getAccountType.get(0).get(0);
-               String managerSpaceString = "Manager ";
-               String managerString = "Manager";
-               if(AccountType.equals(managerString) || AccountType.equals(managerSpaceString)) {
-                  isManager = true;
-               }
-            }
-            else {
-               System.out.println("Cannot verify login details.");
-               System.out.println("Please select from the following options");
-               System.out.println("1. Retry login confirmation");
-               System.out.println("2. Back to main menu");
-               switch (readChoice()) {
-                  case 1: break;
-                  case 2: updateprofile = false; break;
-                  default: System.out.println("Unrecognized choice!"); break;
-               }
-            }
-
-            while(confirmlogin) {
-               if(isManager) {
-                  boolean nouser = true; 
-                  while(nouser) {
-                     System.out.println("Enter login of user you would like to update: ");
-                     userToUpdate = in.readLine();
-                     query = String.format("SELECT * FROM USERS WHERE login = '%s'", userToUpdate);
-                     userNum = esql.executeQuery(query);
-                     if (userNum == 0) {
-                        System.out.println("No user with that login.");
-                        System.out.println("Please select from the following options:");
-                        System.out.println("1. Try new user login");
-                        System.out.println("2. Back to main menu");
-                        switch (readChoice()) {
-                           case 1: break;
-                           case 2: nouser = false; confirmlogin = false; updateprofile = false; break;
-                           default: System.out.println("Unrecognized choice!"); break;
-                        }
-                     }
-                     else {
-                        nouser = false;
-                     }
-                  }
-               }
-               else {
-                  userToUpdate = login;
-               }
-               System.out.println("UPDATE PROFILE MENU");
-               System.out.println("-------------------");
-               System.out.println("1. Update user login");
-               System.out.println("2. Update password");
-               System.out.println("3. Update phone number");
-               System.out.println("4. Update favorite items");
-               System.out.println("5. Update user type (MANAGER ONLY)");
-               System.out.println(".........................");
-               System.out.println("9. Back to Main Menu");
-               
-               switch (readChoice()){
-                  case 1: //updating user login
-                     //cant change PK without foreign keys, so retrieve all other information for user and insert new row to table instead
-                     boolean checklogin = true;
-                     while(checklogin) {
-                        System.out.println("Enter updated user login:");
-                        String updatedLogin = in.readLine();
-                        //check if someone else has the user first since unique
-                        query = String.format("SELECT * FROM USERS WHERE login = '%s'", updatedLogin);
-                        userNum = esql.executeQuery(query);
-                        if(userNum > 0) {
-                           System.out.println("User login already exists!");
-                           System.out.println("Please select from the following options:");
-                           System.out.println("1. Enter a different user login");
-                           System.out.println("2. Go back to update menu");
-                           switch(readChoice()) {
-                              case 1: break;
-                              case 2: checklogin = false; break;
-                              default: System.out.println("Unrecognized choice!");
-                           }
-                        }
-                        else {
-                           String findPassword = String.format("SELECT password FROM USERS WHERE login = '%s'", userToUpdate);
-                           List<List<String>> getPassword = esql.executeQueryAndReturnResult(findPassword);
-                           String thePassword = getPassword.get(0).get(0);
-                           String findPhoneNum = String.format("SELECT phoneNum FROM USERS WHERE login = '%s'", userToUpdate);
-                           List<List<String>> getPhoneNum = esql.executeQueryAndReturnResult(findPhoneNum);
-                           String phoneNum = getPhoneNum.get(0).get(0);
-                           String findFavItems = String.format("SELECT favItems FROM USERS WHERE login = '%s'", userToUpdate);
-                           List<List<String>> getFavItems = esql.executeQueryAndReturnResult(findFavItems);
-                           String favItems = getFavItems.get(0).get(0);
-                           String findTheType = String.format("SELECT type FROM USERS WHERE login = '%s'", userToUpdate);
-                           List<List<String>> getTheType = esql.executeQueryAndReturnResult(findTheType);
-                           String theType = getTheType.get(0).get(0);
-
-                           query = String.format("DELETE FROM users WHERE login = '%s'", userToUpdate);
-                           esql.executeUpdate(query);
-                           userToUpdate = updatedLogin;
-                           login = updatedLogin;
-
-                           query = String.format("INSERT INTO users (phoneNum, login, password, favItems, type) VALUES ('%s', '%s', '%s', '%s', '%s')", phoneNum, updatedLogin, thePassword, favItems, theType);
-                           esql.executeUpdate(query);
-
-                           System.out.println("User login successfully updated!");
-                           System.out.println("Please select from the following options: ");
-                           System.out.println("1. Go back to update menu");
-                           System.out.println("2. Go back to main menu");
-                           switch(readChoice()) {
-                              case 1: checklogin = false; break;
-                              case 2: checklogin = false; confirmlogin = false; updateprofile = false;  break;
-                              default: System.out.println("Unrecognized choice!");
-                           }
-                        }
-                     }
-                     break;
-                  case 2: //updating password
-                     System.out.printf("Enter new user password for '%s': ", userToUpdate);
-                     String newUserPassword = in.readLine();
-
-                     query = String.format("UPDATE users SET password = '%s' WHERE login = '%s'", newUserPassword, userToUpdate);
-                     esql.executeUpdate(query);
-
-                     System.out.println("User password successfully updated!");
-                     System.out.println("Please select from the following options: ");
-                     System.out.println("1. Go back to update menu");
-                     System.out.println("2. Go back to main menu");
-                     switch(readChoice()) {
-                        case 1: break;
-                        case 2: confirmlogin = false; updateprofile = false;  break;
-                        default: System.out.println("Unrecognized choice!");
-                     }
-                     break;
-                  case 3: //updating phone number
-                  boolean checknum = true;
-                  while(checknum) {
-                     System.out.println("Enter updated user phone number:");
-                     String updatedPhoneNumber = in.readLine();
-                     //check if someone else has the user first since unique
-                     query = String.format("SELECT * FROM USERS WHERE phoneNum = '%s'", updatedPhoneNumber);
-                     userNum = esql.executeQuery(query);
-                     if(userNum > 0) {
-                        System.out.println("That phone number is already is use!");
-                        System.out.println("Please select from the following options:");
-                        System.out.println("1. Enter a different user phone number");
-                        System.out.println("2. Go back to update menu");
-                        switch(readChoice()) {
-                           case 1: break;
-                           case 2: checknum = false; break;
-                           default: System.out.println("Unrecognized choice!");
-                        }
-                     }
-                     else {
-                        String findPassword = String.format("SELECT password FROM USERS WHERE login = '%s'", userToUpdate);
-                        List<List<String>> getPassword = esql.executeQueryAndReturnResult(findPassword);
-                        String thePassword = getPassword.get(0).get(0);
-                        String findLogin = String.format("SELECT login FROM USERS WHERE login = '%s'", userToUpdate);
-                        List<List<String>> getLogin = esql.executeQueryAndReturnResult(findLogin);
-                        String userLogin = getLogin.get(0).get(0);
-                        String findFavItems = String.format("SELECT favItems FROM USERS WHERE login = '%s'", userToUpdate);
-                        List<List<String>> getFavItems = esql.executeQueryAndReturnResult(findFavItems);
-                        String favItems = getFavItems.get(0).get(0);
-                        String findTheType = String.format("SELECT type FROM USERS WHERE login = '%s'", userToUpdate);
-                        List<List<String>> getTheType = esql.executeQueryAndReturnResult(findTheType);
-                        String theType = getTheType.get(0).get(0);
-
-                        query = String.format("DELETE FROM users WHERE login = '%s'", userToUpdate);
-                        esql.executeUpdate(query);
-
-                        query = String.format("INSERT INTO users (phoneNum, login, password, favItems, type) VALUES ('%s', '%s', '%s', '%s', '%s')", updatedPhoneNumber, userLogin, thePassword, favItems, theType);
-                        esql.executeUpdate(query);
-
-                        System.out.println("User phone number successfully updated!");
-                        System.out.println("Please select from the following options: ");
-                        System.out.println("1. Go back to update menu");
-                        System.out.println("2. Go back to main menu");
-                        switch(readChoice()) {
-                           case 1: checknum = false; break;
-                           case 2: checknum = false; confirmlogin = false; updateprofile = false; break;
-                           default: System.out.println("Unrecognized choice!");
-                        }
-                     }
-                  }
-                     
-                     break;
-                  case 4: //updating favorite items
-                     System.out.printf("Enter new favorite items for '%s': ", userToUpdate);
-                     String newUserFavItems = in.readLine();
-
-                     query = String.format("UPDATE users SET favItems = '%s' WHERE login = '%s'", newUserFavItems, userToUpdate);
-                     esql.executeUpdate(query);
-
-                     System.out.println("User favorite items successfully updated!");
-                     System.out.println("Please select from the following options: ");
-                     System.out.println("1. Go back to update menu");
-                     System.out.println("2. Go back to main menu");
-                     switch(readChoice()) {
-                        case 1: break;
-                        case 2: confirmlogin = false; updateprofile = false;  break;
-                        default: System.out.println("Unrecognized choice!");
-                     }
-                     break;
-                  case 5: //update user type
-                     if(!isManager) {
-                        System.out.println("********MANAGER ONLY********");
-                     }
-                     else {
-                        System.out.printf("Enter new user type for '%s': ", userToUpdate);
-                        String newUserType = in.readLine();
-
-                        query = String.format("UPDATE users SET type = '%s' WHERE login = '%s'", newUserType, userToUpdate);
-                        esql.executeUpdate(query);
-
-                        System.out.println("User type successfully updated!");
-                        System.out.println("Please select from the following options: ");
-                        System.out.println("1. Go back to update menu");
-                        System.out.println("2. Go back to main menu");
-                        switch(readChoice()) {
-                           case 1: if(userToUpdate.equals(login) && !newUserType.equals("Manager")) { isManager = false; }break;
-                           case 2: confirmlogin = false; updateprofile = false;  break;
-                           default: System.out.println("Unrecognized choice!");
-                        }
-                     }
-                     break;
-                  case 9: confirmlogin = false; updateprofile = false; break;
-                  default : System.out.println("Unrecognized choice!"); break;
-               }
-            }
+            default:
+               System.out.println("Unrecognized choice!");
+               break;
          }
       }
-      catch(Exception e){
-         System.err.println (e.getMessage ());
+   }catch(Exception e) {
+      System.err.println (e.getMessage ());
+   }
+}//end Menu
+public static void FullMenu(Cafe esql) {
+
+}
+public static void MenuByItemType(Cafe esql) {
+   try {
+   String type = null;
+   boolean confirmingItemType = true;
+   boolean confirmedType = false;
+
+   System.out.println("here");
+
+   while(confirmingItemType) {
+      System.out.println("Item Type Choices: ");
+      System.out.println("1. Drinks");
+      System.out.println("2. Soup");
+      System.out.println("3. Sweets");
+      System.out.println("4. Back to viewing menu options");
+      switch(readChoice()) {
+         case 1: type = "Drinks"; confirmedType = true; break;
+         case 2: type = "Soup"; confirmedType = true; break;
+         case 3: type = "Sweets"; confirmedType = true; break;
+         case 4: confirmingItemType = false;
+         default: System.out.println("Unrecognized choice!"); break;
+      }
+
+      if (confirmedType) {
+         String getInfo = String.format("SELECT itemName, price, description, imageURL FROM Menu WHERE type = '%s'", type);
+            esql.executeQueryAndPrintResult(getInfo);
+
+         confirmingItemType = false;
+
       }
    }
+}catch(Exception e) {
+   System.err.println (e.getMessage ());
+}
+}
+
+public static boolean ItemTypeOnMenu(Cafe esql, String type) {
+   try{
+      String query = String.format("SELECT type FROM Menu WHERE itemName = '%s'", type);
+      int userNum = esql.executeQuery(query);
+      if(userNum > 0) {
+         System.out.println(type + " on the menu!");
+         return true;
+      }
+      else {
+         System.out.println(type + " not on the menu!");
+         return false;
+      }
+   }catch(Exception e) {
+      System.err.println (e.getMessage ());
+      return false;
+   }
+}
+
+public static void MenuByItemName(Cafe esql) {
+   try {
+      boolean confirmingItemName = true;
+      while(confirmingItemName) {
+         System.out.println("Enter the item name you are looking for: ");
+         String name = in.readLine();
+         if(!ItemOnMenu(esql, name)) {
+            System.out.println("1. Enter another item name");
+            System.out.println("2. Go back to menu viewing options");
+            switch(readChoice()) {
+               case 1: break;
+               case 2: confirmingItemName = false; break;
+               default: System.out.println("Unrecognized choice!"); break;
+            }
+         }
+         else {
+            String getInfo = String.format("SELECT itemName FROM Menu WHERE itemName = '%s'", name);
+            System.out.print("Name: ");
+            esql.executeQueryAndPrintResult(getInfo);
+            
+            getInfo = String.format("SELECT type FROM Menu WHERE itemName = '%s'", name);
+            System.out.print("Type: ");
+            esql.executeQueryAndPrintResult(getInfo);
+
+            getInfo = String.format("SELECT price FROM Menu WHERE itemName = '%s'", name);
+            System.out.print("Price: ");
+            esql.executeQueryAndPrintResult(getInfo);
+
+            getInfo = String.format("SELECT description FROM Menu WHERE itemName = '%s'", name);
+            System.out.print("Description: ");
+            esql.executeQueryAndPrintResult(getInfo);
+
+            getInfo = String.format("SELECT imageURL FROM Menu WHERE itemName = '%s'", name);
+            System.out.print("URL: ");
+            esql.executeQueryAndPrintResult(getInfo);
+            confirmingItemName = false;
+         }
+      }
+   }catch(Exception e) {
+      System.err.println (e.getMessage ());
+   }
+}
+
+public static boolean ItemOnMenu(Cafe esql, String name) {
+   try{
+      String query = String.format("SELECT itemName FROM Menu WHERE itemName = '%s'", name);
+      int userNum = esql.executeQuery(query);
+      if(userNum > 0) {
+         System.out.println(name + " is on the menu!");
+         return true;
+      }
+      else {
+         System.out.println(name + " is not on the menu!");
+         return false;
+      }
+   }catch(Exception e) {
+      System.err.println (e.getMessage ());
+      return false;
+   }
+}
+
+ /*returns a string that states the users type after login*/
+ public static String CheckUserType(Cafe esql, String authorizedUser) {
+   try{
+      if(authorizedUser.equals(null)){
+          return null;
+      }
+      else {
+          String findType = String.format("SELECT type FROM USERS WHERE login = '%s'", authorizedUser);
+          List<List<String>> getAccountType = esql.executeQueryAndReturnResult(findType);
+          String accountType = getAccountType.get(0).get(0);
+          return accountType;
+      }
+   }catch(Exception e) {
+      System.err.println (e.getMessage ());
+      return null;
+   }
+}//end CheckUserType
+
+/*returns boolean true if login is in db, false if login is not in db*/
+public static boolean LoginExists(Cafe esql, String userLogin) {
+  try {
+      String query = String.format("SELECT * FROM USERS WHERE login = '%s'", userLogin);
+      int userNum = esql.executeQuery(query);
+      if (userNum > 0) {
+          System.out.println("User login exists");
+          return true;
+      }
+      else {
+          System.out.println("User login does not exist");
+          return false;
+      }
+  }catch(Exception e) {
+      System.err.println (e.getMessage ());
+      return false;
+  }
+}//end LoginExists
+
+/* Formats phone number */
+public static String FixPhoneNumber(String userPhoneNumber) {
+  String countryCode = "+1(";
+  String closeAreaCode = ")";
+  String middleDash = "-";
+  int endOfAreaCode = 2; //index where area code ends
+  int endOf3Dig = 5; //index where first three digits end
+  //888 888 8888
+  String fixedNumber = countryCode + userPhoneNumber.substring(0, endOfAreaCode + 1)
+                          + closeAreaCode + userPhoneNumber.substring(endOfAreaCode + 1, endOf3Dig + 1)
+                          + middleDash + userPhoneNumber.substring(endOf3Dig + 1);
+
+  return fixedNumber;
+}//end FixPhoneNumber
+
+/* Checks that phone number was entered correctly */
+public static boolean CheckPhoneNumber(String userPhoneNumber) {
+  if(userPhoneNumber.length() != 10) { //checks number of chars
+      System.out.println("Phone number must be 10 digits!");
+      return false;
+  }
+  if(!userPhoneNumber.matches("[0-9]+")) {//checks only digits were inputted
+      System.out.println("Phone number must only contain digits!");
+      return false;
+  }
+  else {
+      return true;
+  }
+}//end CheckPhoneNumber
+
+public static boolean PhoneNumberExists(Cafe esql, String userPhoneNumber) {
+  try {
+      String query = String.format("SELECT * FROM USERS WHERE phoneNum = '%s'", userPhoneNumber);
+      int userNum = esql.executeQuery(query);
+      if (userNum > 0) {
+          System.out.println("User phone number exists");
+          return true;
+      }
+      else {
+          System.out.println("User phone number does not exist");
+          return false;
+      }
+  }catch(Exception e) {
+      System.err.println (e.getMessage ());
+      return false;
+  }
+}//end PhoneNumberExists
+
+public static String UpdateProfile(Cafe esql, String authorizedUser, Boolean checkManager){
+  try {
+     boolean updatingProfile = true;
+     String userToUpdate = authorizedUser;
+
+     /*Outermost while loop gets the user to confirms login details and sees if the user is a manager*/
+     while (updatingProfile) {
+   
+           System.out.println("UPDATE PROFILE MENU");
+           System.out.println("-------------------");
+           System.out.println("1. Update user login");
+           System.out.println("2. Update password");
+           System.out.println("3. Update phone number");
+           System.out.println("4. Update favorite items");
+           
+           if(checkManager) {
+               System.out.println("5. Update user type");
+           }
+           System.out.println(".........................");
+           System.out.println("9. Back to Main Menu");
+           
+           switch (readChoice()){
+          
+              case 1: //updating user login
+                 userToUpdate = UpdateUserLogin(esql, userToUpdate);
+                 break;
+
+              case 2: //updating password
+                 UpdateUserPassword(esql, userToUpdate);
+                 break;
+
+              case 3: //updating phone number
+                 UpdateUserPhoneNumber(esql, userToUpdate);
+                 break;
+
+              case 4: //updating favorite items *****FIXME******
+                 System.out.printf("Enter new favorite items for '%s': ", userToUpdate);
+                 String newUserFavItems = in.readLine();
+
+                 String query = String.format("UPDATE users SET favItems = '%s' WHERE login = '%s'", newUserFavItems, userToUpdate);
+                 esql.executeUpdate(query);
+
+                 System.out.println("User favorite items successfully updated!");
+                 break;
+              
+              case 5: //updating user type as manager only
+                 if(!checkManager) {
+                     System.out.println("Unrecognized choice!");
+                     break;
+                 }
+
+                 else {
+                     UpdateUserType(esql, userToUpdate);
+                 }
+                 break;
+
+              case 9: 
+                  updatingProfile = false; 
+                  break;
+
+              default: 
+                  System.out.println("Unrecognized choice!"); 
+                  break;
+           }
+         }
+        return userToUpdate;
+     
+   }
+  catch(Exception e){
+     System.err.println (e.getMessage ());
+     return null;
+  }
+}//end of UpdateProfile
+
+/* How managers can update other user's profiles */
+public static void UpdateOtherUserProfile(Cafe esql, boolean checkManager) {
+  try {
+   boolean userSelection = true;
+  while (userSelection) {
+      System.out.println("Enter login of user you would like to update: ");
+      String userSelected = in.readLine();
+      
+      if(!LoginExists(esql, userSelected)){
+          System.out.println("1. Try new user login");
+          System.out.println("2. Back to main menu");
+          
+          switch (readChoice()) {
+              case 1: 
+                  break;
+      
+              case 2: 
+                  userSelection = false; 
+                  break;
+                  
+              default: 
+                  System.out.println("Unrecognized choice!"); 
+                  break;
+          }
+      }
+      else {
+          userSelected = UpdateProfile(esql, userSelected, checkManager);
+          userSelection = false;
+      }
+  }
+} catch(Exception e){
+   System.err.println (e.getMessage ());
+}
+}//end of UpdateOtherUserProfile
+
+/* How to update user login in table */
+public static String UpdateUserLogin(Cafe esql, String userToUpdate) {
+  try {
+      boolean loginUpdating = true;
+      while(loginUpdating) {
+          System.out.println("Enter updated user login:");
+          String updatedLogin = in.readLine();
+          //check if someone else has the user first since unique
+          if(LoginExists(esql, updatedLogin)) {
+              System.out.println("1. Enter a different user login");
+              System.out.println("2. Go back to update menu");
+              switch(readChoice()) {
+                  case 1: break;
+                  case 2: loginUpdating = false; break;
+                  default: System.out.println("Unrecognized choice!"); break;
+              }
+          }
+
+          else {
+              System.out.printf("Updating user login '%s' to '%s'\n", userToUpdate, updatedLogin);
+              String query = String.format("UPDATE users SET login = '%s' WHERE login = '%s'", updatedLogin, userToUpdate);
+              esql.executeUpdate(query);
+              
+              userToUpdate = updatedLogin;
+
+              System.out.println("User login successfully updated!");
+              
+              loginUpdating = false;
+          }
+      }
+      return userToUpdate;
+  }catch(Exception e){
+      System.err.println (e.getMessage ());
+      return userToUpdate;
+  }
+}//end of UpdateUserLogin
+
+/* How to update password for user */
+public static void UpdateUserPassword(Cafe esql, String userToUpdate) {
+  try { 
+      System.out.printf("Enter new user password for '%s': ", userToUpdate);
+      String newUserPassword = in.readLine();
+
+      String query = String.format("UPDATE users SET password = '%s' WHERE login = '%s'", newUserPassword, userToUpdate);
+      esql.executeUpdate(query);
+
+      System.out.println("User password successfully updated!");
+  }catch(Exception e){
+      System.err.println (e.getMessage ());
+  }
+}//end of UpdateUserPassword
+
+/* How to update phone number of user */
+public static void UpdateUserPhoneNumber(Cafe esql, String userToUpdate) {
+  try {    
+      boolean updatingPhoneNum = true;
+      boolean formattingCorrect = false;
+      while(updatingPhoneNum) {
+          System.out.println("Enter updated user phone number: ");
+          String updatedPhoneNumber = in.readLine();
+
+          //checks if proper input
+          boolean phoneCheck = CheckPhoneNumber(updatedPhoneNumber);
+          if(!phoneCheck) {
+            System.out.println("1. Enter a different user phone number");
+            System.out.println("2. Go back to update menu");
+            switch(readChoice()) {
+            case 1: break;
+            case 2: updatingPhoneNum = false; break;
+            default: System.out.println("Unrecognized choice!"); break;
+            }
+          }
+          else {
+               updatedPhoneNumber = FixPhoneNumber(updatedPhoneNumber);
+              formattingCorrect = true;
+          }
+
+          while(formattingCorrect) {
+            boolean existingPhone = PhoneNumberExists(esql, updatedPhoneNumber);
+          if(existingPhone){
+                  System.out.println("1. Enter a different user phone number");
+                  System.out.println("2. Go back to update menu");
+                  switch(readChoice()) {
+                  case 1: formattingCorrect = false; break;
+                  case 2: formattingCorrect = false; updatingPhoneNum = false; break;
+                  default: System.out.println("Unrecognized choice!"); break;
+                  }
+          }
+          else {
+              System.out.printf("Updating user phone number to '%s'\n", updatedPhoneNumber);
+              String query = String.format("UPDATE users SET phoneNum = '%s' WHERE login = '%s'", updatedPhoneNumber, userToUpdate);
+              esql.executeUpdate(query);
+
+              System.out.println("User phone number successfully updated!");
+              
+              updatingPhoneNum = false;
+              formattingCorrect = false;
+              
+          }
+         }
+      }
+  }catch(Exception e){
+      System.err.println (e.getMessage ());
+  }
+}//end UpdateUserPhoneNumber
+
+public static void UpdateUserType(Cafe esql, String userToUpdate) {
+   try{
+      String newUserType = "Customer";
+
+      System.out.printf("Select new user type for '%s': \n", userToUpdate);
+      System.out.println("1. Customer");
+      System.out.println("2. Employee");
+      System.out.println("3. Manager");
+      switch(readChoice()) {
+          case 1:
+              newUserType = "Customer";
+              break;
+
+          case 2:
+              newUserType = "Employee";
+              break;
+
+          case 3:
+              newUserType = "Manager";
+              break;
+
+          default:
+              System.out.println("Unrecognized choice!");
+              break;
+
+      }
+
+      String query = String.format("UPDATE users SET type = '%s' WHERE login = '%s'", newUserType, userToUpdate);
+      esql.executeUpdate(query);
+
+      System.out.println("User type successfully updated to " + newUserType + "!");
+  }catch(Exception e){
+          System.err.println (e.getMessage ());
+       }
+}//end UpdateUserType
 
   public static void PlaceOrder(Cafe esql){}
 
