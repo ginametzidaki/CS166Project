@@ -25,7 +25,10 @@ CREATE TABLE Orders(
 	paid boolean,
 	timeStampRecieved timestamp NOT NULL,
 	total real NOT NULL,
-	PRIMARY KEY(orderid));
+	PRIMARY KEY(orderid)
+	--added so that when users put in an order but update their login, you can still find the order
+	FOREIGN KEY(login) REFERENCES Users(login);
+	ON UPDATE CASCADE);
 
 CREATE TABLE ItemStatus(
 	orderid integer,
